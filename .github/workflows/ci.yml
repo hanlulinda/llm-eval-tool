@@ -1,0 +1,42 @@
+# llm-eval-tool CI 流水线（GitHub Actions）
+# 对应 5W1H 的 HOW：checkout → 装依赖 → 测试 → 冒烟 → 产物
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Stage1: 拉取代码
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      # Stage2: 安装 Python
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Stage3: 安装依赖（requirements.txt 含 openai/requests/pytest）
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      # Stage4: 单元测试（测试纯函数：JSON解析、mock评分可复现性）
+      - name: 单元测试
+        run: python -m pytest tests/ -v
+
+      # Stage5: 冒烟验证（mock 模式跑通全流程，不消耗 API Key）
+      - name: 冒烟验证（mock 全流程）
+        run: python main.py --mock
+
+      # Stage6: 上传评测报告产物（可下载查看）
+      - name: 上传评测报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: results/
