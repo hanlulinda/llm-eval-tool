@@ -3,6 +3,9 @@
 
 覆盖：JSON 解析容错、mock 评分可复现性、评分范围
 """
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -44,3 +47,22 @@ def test_mock_score_range():
     s = judge_one_mock({"id": "e9"}, "x")
     for dim in DIMENSIONS:
         assert 0 <= s[dim] <= 5
+
+
+def test_scorer_imports_without_runtime_config(tmp_path):
+    """CI 不提供含 API Key 的 config.py 时，纯评分工具仍应可导入。"""
+    root = Path(__file__).resolve().parents[1]
+    for module in ("scorer.py", "prompts.py"):
+        shutil.copy(root / module, tmp_path / module)
+
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, "-c", "import scorer"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

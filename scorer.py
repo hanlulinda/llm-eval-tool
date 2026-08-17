@@ -4,16 +4,21 @@ import json
 import re
 import time
 
-import config
 from prompts import JUDGE_SYSTEM, JUDGE_USER_NO_REF, JUDGE_USER_TEMPLATE
 
 DIMENSIONS = ["accuracy", "relevance", "completeness", "fluency", "hallucination"]
 
 
+def get_active_config():
+    """仅在真实 API 评分时加载含密钥的运行时配置。"""
+    import config
+    return config.ACTIVE
+
+
 def get_client(cfg=None):
     """创建用于调用 Judge 模型的 OpenAI 兼容客户端（惰性导入）"""
     from openai import OpenAI
-    cfg = cfg or config.ACTIVE
+    cfg = cfg or get_active_config()
     return OpenAI(api_key=cfg["api_key"], base_url=cfg["base_url"])
 
 
@@ -30,7 +35,7 @@ def extract_json(text):
 
 def judge_one(client, item, answer, model=None, retries=3):
     """对单题回答调用 Judge 打分，返回 {维度: 分数, reason}"""
-    model = model or config.ACTIVE["model"]
+    model = model or get_active_config()["model"]
     reference = item.get("reference", "").strip()
     if reference:
         user_prompt = JUDGE_USER_TEMPLATE.format(
@@ -73,6 +78,7 @@ def judge_one_mock(item, answer):
 def run(eval_set, answers, output_path="results/scores.json", mock=False, cfg=None, tag=""):
     """逐题评分：按 id 对齐回答与评测集；mock=True 时使用模拟评分；cfg 指定 Judge 模型配置"""
     by_id = {a["id"]: a for a in answers}
+    judge_cfg = cfg or (None if mock else get_active_config())
     client = None
     scored = []
     for idx, item in enumerate(eval_set, 1):
@@ -83,8 +89,8 @@ def run(eval_set, answers, output_path="results/scores.json", mock=False, cfg=No
             scores = judge_one_mock(item, answer)
         else:
             if client is None:
-                client = get_client(cfg)
-            scores = judge_one(client, item, answer)
+                client = get_client(judge_cfg)
+            scores = judge_one(client, item, answer, model=judge_cfg["model"])
         scored.append({
             "id": item["id"],
             "question": item["question"],
