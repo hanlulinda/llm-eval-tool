@@ -20,6 +20,12 @@ def load_eval_set(path="eval_set.json"):
         return json.load(f)
 
 
+def get_active_model_name():
+    """仅在真实评测时读取本地 API 配置。"""
+    import config
+    return config.ACTIVE["model"]
+
+
 def main():
     parser = argparse.ArgumentParser(description="LLM 回复质量评测工具")
     parser.add_argument("--skip-generate", action="store_true",
@@ -42,7 +48,8 @@ def main():
         answers = evaluator.run(eval_set)
 
     scored = scorer.run(eval_set, answers, mock=args.mock)
-    report_mod.generate(scored)
+    model_name = "mock（未调用真实模型）" if args.mock else get_active_model_name()
+    report_mod.generate(scored, model_name=model_name)
     print("[main] 全流程完成 ✅")
 
 

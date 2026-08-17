@@ -3,20 +3,23 @@
 import json
 import time
 
-import config
+def get_active_config():
+    """仅在真实 API 生成时加载含密钥的运行时配置。"""
+    import config
+    return config.ACTIVE
 
 
 def get_client(cfg=None):
     """创建 OpenAI 兼容客户端（惰性导入：mock 模式不依赖 openai 包）
     cfg 为空时使用 config.ACTIVE；传入其他模型配置（如对比评测）时使用该配置"""
     from openai import OpenAI
-    cfg = cfg or config.ACTIVE
+    cfg = cfg or get_active_config()
     return OpenAI(api_key=cfg["api_key"], base_url=cfg["base_url"])
 
 
 def ask_llm(client, question, model=None, temperature=0.7, max_tokens=1024, retries=3):
     """调用被测模型回答单题，失败自动重试；temperature=None 时不传该参数（兼容 reasoner 模型）"""
-    model = model or config.ACTIVE["model"]
+    model = model or get_active_config()["model"]
     kwargs = {
         "model": model,
         "messages": [{"role": "user", "content": question}],
@@ -37,7 +40,7 @@ def ask_llm(client, question, model=None, temperature=0.7, max_tokens=1024, retr
 def run(eval_set, output_path="results/answers.json", cfg=None, tag=""):
     """对评测集逐题生成回答并落盘；cfg 可指定其他模型配置（对比评测用），tag 用于日志标识"""
     client = get_client(cfg)
-    cfg = cfg or config.ACTIVE
+    cfg = cfg or get_active_config()
     model = cfg["model"]
     temperature = cfg.get("temperature", 0.7)
     answers = []

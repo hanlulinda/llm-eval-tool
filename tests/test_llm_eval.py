@@ -66,3 +66,25 @@ def test_scorer_imports_without_runtime_config(tmp_path):
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_mock_cli_runs_without_runtime_config(tmp_path):
+    """CI 冒烟模式不应要求本地的 config.py 或 API Key。"""
+    root = Path(__file__).resolve().parents[1]
+    for file_name in (
+        "main.py", "evaluator.py", "scorer.py", "report.py", "prompts.py", "eval_set.json",
+    ):
+        shutil.copy(root / file_name, tmp_path / file_name)
+
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, "main.py", "--mock"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "results" / "report.md").exists()

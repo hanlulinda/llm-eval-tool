@@ -4,7 +4,6 @@ import csv
 import json
 from datetime import datetime
 
-import config
 from scorer import DIMENSIONS
 
 
@@ -13,7 +12,7 @@ def _avg(nums):
 
 
 def generate(scored, report_path="results/report.md", csv_path="results/report.csv",
-             model_name=None):
+             model_name="未标注"):
     n = len(scored)
     dim_avg = {dim: _avg([s[dim] for s in scored]) for dim in DIMENSIONS}
     overall = round(sum(dim_avg.values()) / len(DIMENSIONS), 2)
@@ -22,7 +21,7 @@ def generate(scored, report_path="results/report.md", csv_path="results/report.c
     lines = [
         "# LLM 回复质量评测报告",
         "",
-        f"- 被测模型：{model_name or config.ACTIVE['model']}",
+        f"- 被测模型：{model_name}",
         f"- 评测题数：{n}",
         f"- 评测日期：{datetime.now().strftime('%Y-%m-%d %H:%M')}",
         "- 评分方式：LLM-as-Judge，temperature=0，五维评分（0-5）",
