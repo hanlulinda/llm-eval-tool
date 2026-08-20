@@ -87,4 +87,5 @@ def test_mock_cli_runs_without_runtime_config(tmp_path):
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert (tmp_path / "results" / "report.md").exists()
+    # mock 模式产物在 results/mock/ 独立目录（不污染真实评测产物）
+    assert (tmp_path / "results" / "mock" / "report.md").exists()
