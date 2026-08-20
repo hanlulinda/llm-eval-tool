@@ -34,6 +34,7 @@ python main.py --skip-generate  # 复用已回答，重新评分出报告
 ```
 
 产物在 `results/` 目录：`answers.json`（原始回答）、`scores.json`（逐题评分）、`report.md`（报告）、`report.csv`（表格数据）。
+> 说明：`--mock` 模式的产物在 `results/mock/` 独立目录（不污染真实评测数据）；`compare.py --mock` 在 `results/compare/mock/`。
 
 ## 真实评测结果（2026-08-20，DeepSeek 真实 API）
 
