@@ -26,6 +26,19 @@ def _avg(nums):
 
 def build_sheet(scored, n, sheet_path="results/review_sheet.csv"):
     """抽样生成人工复核表：含问题/回答/参考/AI 评分 + 空的人工评分列"""
+    # 防护：若已有 sheet 且含人工打分（human_* 列有值），先备份，防止误覆盖丢数据
+    if os.path.exists(sheet_path):
+        try:
+            with open(sheet_path, "r", encoding="utf-8-sig") as f:
+                for row in csv.DictReader(f):
+                    if row.get("human_accuracy"):
+                        backup = sheet_path + ".bak"
+                        with open(sheet_path, "rb") as src, open(backup, "wb") as dst:
+                            dst.write(src.read())
+                        print(f"[review] 检测到含人工打分的旧表，已备份为 {backup}")
+                        break
+        except Exception:
+            pass
     items = scored if n >= len(scored) else random.sample(scored, n)
     # 补充参考回答（从评测集读取，供人工判断准确性）
     ref_by_id = {}
