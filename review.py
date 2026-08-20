@@ -27,6 +27,13 @@ def _avg(nums):
 def build_sheet(scored, n, sheet_path="results/review_sheet.csv"):
     """抽样生成人工复核表：含问题/回答/参考/AI 评分 + 空的人工评分列"""
     items = scored if n >= len(scored) else random.sample(scored, n)
+    # 补充参考回答（从评测集读取，供人工判断准确性）
+    ref_by_id = {}
+    try:
+        with open("eval_set.json", "r", encoding="utf-8") as f:
+            ref_by_id = {it["id"]: it.get("reference", "") for it in json.load(f)}
+    except Exception:
+        pass
     with open(sheet_path, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["id", "question", "answer", "reference",
@@ -35,7 +42,8 @@ def build_sheet(scored, n, sheet_path="results/review_sheet.csv"):
                          "human_accuracy", "human_relevance", "human_completeness",
                          "human_fluency", "human_hallucination", "human_reason"])
         for it in items:
-            writer.writerow([it["id"], it["question"], it["answer"], it.get("reference", ""),
+            reference = ref_by_id.get(it["id"], it.get("reference", ""))
+            writer.writerow([it["id"], it["question"], it["answer"], reference,
                              it["accuracy"], it["relevance"], it["completeness"],
                              it["fluency"], it["hallucination"], it.get("reason", ""),
                              "", "", "", "", "", ""])

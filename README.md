@@ -33,6 +33,16 @@ python main.py --skip-generate  # 复用已回答，重新评分出报告
 
 产物在 `results/` 目录：`answers.json`（原始回答）、`scores.json`（逐题评分）、`report.md`（报告）、`report.csv`（表格数据）。
 
+## 真实评测结果（2026-08-20，DeepSeek 真实 API）
+
+**主评测（15 题）**：综合均分 **4.57 / 5**，最薄弱维度 accuracy（4.33）→ 提示补该方向评测用例（薄弱维度分析）
+
+**人工复核（3 题抽样）**：AI 与人工一致率 **66.7%**（2/3），不一致题 e3（AI 4.8 vs 人工 3.0）→ 触发评分标准校准闭环
+
+**双模型对比（15 题，统一 Judge）**：deepseek-chat 综合 **4.56** vs deepseek-reasoner **4.0**（+0.56）；reasoner 在编程/代码类题拿低分、但在电商客服题反超 → 结论：结合业务场景选型
+
+（样例报告见 `examples/`：sample_report.md / sample_review_report.md / sample_compare_report.md）
+
 ## 人工复核（对应 LLM 评测难点：人工兜底）
 
 自动化评分之外，抽样人工复核，用**一致率**校准 AI 评分的可靠性：
