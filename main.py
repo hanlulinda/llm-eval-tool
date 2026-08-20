@@ -34,12 +34,14 @@ def main():
                         help="模拟模式：不调用真实 API，用模拟数据跑通全流程")
     args = parser.parse_args()
 
-    os.makedirs("results", exist_ok=True)
+    # mock 模式输出到 results/mock/，绝不覆盖真实评测产物（防污染）
+    out_dir = "results/mock" if args.mock else "results"
+    os.makedirs(out_dir, exist_ok=True)
     eval_set = load_eval_set()
-    print(f"[main] 评测集加载：{len(eval_set)} 题")
+    print(f"[main] 评测集加载：{len(eval_set)} 题" + ("（mock 模式，产物在 results/mock/）" if args.mock else ""))
 
     if args.mock:
-        answers = evaluator.run_mock(eval_set)
+        answers = evaluator.run_mock(eval_set, output_path=f"{out_dir}/answers.json")
     elif args.skip_generate and os.path.exists("results/answers.json"):
         with open("results/answers.json", "r", encoding="utf-8") as f:
             answers = json.load(f)
@@ -47,9 +49,10 @@ def main():
     else:
         answers = evaluator.run(eval_set)
 
-    scored = scorer.run(eval_set, answers, mock=args.mock)
+    scored = scorer.run(eval_set, answers, output_path=f"{out_dir}/scores.json", mock=args.mock)
     model_name = "mock（未调用真实模型）" if args.mock else get_active_model_name()
-    report_mod.generate(scored, model_name=model_name)
+    report_mod.generate(scored, report_path=f"{out_dir}/report.md", csv_path=f"{out_dir}/report.csv",
+                        model_name=model_name)
     print("[main] 全流程完成 ✅")
 
 
