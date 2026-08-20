@@ -39,7 +39,7 @@ python main.py --skip-generate  # 复用已回答，重新评分出报告
 
 **人工复核（3 题抽样）**：AI 与人工一致率 **66.7%**（2/3），不一致题 e3（AI 4.8 vs 人工 3.0）→ 触发评分标准校准闭环
 
-**双模型对比（15 题，统一 Judge）**：deepseek-chat 综合 **4.56** vs deepseek-reasoner **4.0**（+0.56）；reasoner 在编程/代码类题拿低分、但在电商客服题反超 → 结论：结合业务场景选型
+**双模型对比（15 题，统一 Judge）**：deepseek-chat 综合 **4.56** vs deepseek-reasoner **4.0**（+0.56）；reasoner 在工程技术题（用例生成/测试数据设计/MySQL索引）拿低分、但在电商客服题反超 → 结论：结合业务场景选型
 
 （样例报告见 `examples/`：sample_report.md / sample_review_report.md / sample_compare_report.md）
 
