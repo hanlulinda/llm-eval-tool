@@ -1,5 +1,7 @@
 # llm-eval-tool — LLM 回复质量自动评测工具
 
+[![CI](https://github.com/hanlulinda/llm-eval-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/hanlulinda/llm-eval-tool/actions/workflows/ci.yml)
+
 对被测大模型的回答进行**多维自动评分**并生成评测报告，属于"AI 测试 / 大模型评测"方向的实战项目。
 
 ## 为什么做这个项目
