@@ -66,10 +66,12 @@ def main():
                   for t in args.temps]
         print(f"[compare] 温度对比模式：{' vs '.join(x['name'] for x in models)}")
 
-    os.makedirs(OUT_DIR, exist_ok=True)
+    # mock 模式输出到 results/compare/mock/，绝不覆盖真实对比产物（防污染）
+    out_dir = f"{OUT_DIR}/mock" if args.mock else OUT_DIR
+    os.makedirs(out_dir, exist_ok=True)
     with open("eval_set.json", "r", encoding="utf-8") as f:
         eval_set = json.load(f)
-    print(f"[compare] 评测集：{len(eval_set)} 题")
+    print(f"[compare] 评测集：{len(eval_set)} 题" + ("（mock 模式，产物在 results/compare/mock/）" if args.mock else ""))
     print(f"[compare] 对比对象：{' vs '.join(m['name'] for m in models)}")
 
     all_scores = {}
@@ -79,20 +81,20 @@ def main():
                      "model": m["model"], "temperature": m.get("temperature", 0.7)}
         if args.mock:
             answers = evaluator.run_mock(eval_set,
-                                         output_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_answers.json")
+                                         output_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_answers.json")
             scored = scorer.run(eval_set, answers,
-                                output_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_scores.json",
+                                output_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_scores.json",
                                 mock=True, tag=tag)
         else:
             answers = evaluator.run(eval_set,
-                                    output_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_answers.json",
+                                    output_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_answers.json",
                                     cfg=model_cfg, tag=tag)
             scored = scorer.run(eval_set, answers,
-                                output_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_scores.json",
+                                output_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_scores.json",
                                 cfg=JUDGE_CFG, tag=tag)
         report_mod.generate(scored,
-                            report_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_report.md",
-                            csv_path=f"{OUT_DIR}/{m['model']}_t{m.get('temperature', 'x')}_report.csv",
+                            report_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_report.md",
+                            csv_path=f"{out_dir}/{m['model']}_t{m.get('temperature', 'x')}_report.csv",
                             model_name=m["name"])
         all_scores[m["name"]] = scored
 
@@ -104,7 +106,7 @@ def main():
     else:
         advice = ("- 结论：结合业务场景选择：推理类问题（分析/计算）选推理模型，"
                   "对话与内容生成场景选通用模型")
-    build_compare_report(all_scores, advice)
+    build_compare_report(all_scores, advice, out_dir)
 
 
 def _avg(scored, dim):
@@ -112,7 +114,7 @@ def _avg(scored, dim):
     return round(sum(vals) / len(vals), 2)
 
 
-def build_compare_report(all_scores, advice=None):
+def build_compare_report(all_scores, advice=None, out_dir="results/compare"):
     """生成对比报告：各维度均分对比 + 逐题分数对比；advice 为结论建议文本"""
     names = list(all_scores.keys())
     n = len(all_scores[names[0]])
@@ -154,7 +156,7 @@ def build_compare_report(all_scores, advice=None):
         lines += advice.split("\n")
     lines += ["", "> 本报告由 llm-eval-tool 对比评测模块生成（同一评测集，评分口径一致，可比）。"]
 
-    path = f"{OUT_DIR}/compare_report.md"
+    path = f"{out_dir}/compare_report.md"
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"[compare] 对比报告已生成：{path}")
